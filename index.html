@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html manifest="ringo.appcache">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta names="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="ringo.png" />
+    <title>Ringo</title>
+    <script src="jquery.min.js"></script>
+    <script src="ringo.js"></script>
+    <style type="text/css" media="screen">
+      html, body {margin: 0; padding: 0; height: 100%; overflow:hidden;}
+      /*html { height: 100%; overflow: hidden }
+      body { margin: 0px; padding: 0px; height: 100%; }*/
+    </style>
+  </head>
+<body onload="setTimeout(function() { window.scrollTo(0, 1) }, 100);">
+  <div id="container">
+    <canvas height="480" width="320" id="canvas">Sorry, your browser is not supported</canvas>
+  </div>
+</body>
+</html>
