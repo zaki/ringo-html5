@@ -1,11 +1,13 @@
 CACHE MANIFEST
 index.html
-ringo.js
+js/ringo.js
 jquery.min.js
-apple.png
-counter.png
-player.png
-ringo.png
-splash.png
-twitter.png
-se1.wav
+assets/images/apple.png
+assets/images/counter.png
+assets/images/player.png
+assets/images/reset.png
+assets/images/ringo.png
+assets/images/splash.png
+assets/images/twitter.png
+assets/sounds/se1.wav
+assets/sounds/se2.wav
