@@ -114,17 +114,34 @@ $ ->
     event.preventDefault()
     localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY)
 
-    if hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)
-      if (confirm("Would you like to send a tweet with your score?"))
-        window.location = "http://twitter.com/home?status=" + escape("I have collected "+player.score+" apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html")
-      return
+    if State._current == State.PLAYING
+      if hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)
+        State._current = State.SETTINGS
+        draw()
+        return
 
-    if hitTest(localPosition, 75, 135, 0, 20)
-      if (confirm("Would you like to reset your score?"))
-       player.score = 0
-       localStorage.setItem "ringo-score", 0
-       draw()
-      return
+    else
+      if hitTest(localPosition, canvas.width / 2 + 120, canvas.width / 2 + 150, canvas.height / 2 - 240, canvas.height / 2 - 215)
+        State._current = State.PLAYING
+        draw()
+        return
+
+      if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 140, canvas.height / 2 + 130, canvas.height / 2 + 165)
+        if (confirm("Would you like to reset your score?"))
+         player.score = 0
+         localStorage.setItem "ringo-score", 0
+         draw()
+        return
+
+      if hitTest(localPosition, canvas.width / 2 - 125, canvas.width / 2 + 125, canvas.height / 2 + 175, canvas.height / 2 + 225)
+        if (confirm("Would you like to reset your visit m7kenji.com?"))
+          window.location = "http://m7kenji.com"
+        return
+
+      if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)
+        if (confirm("Would you like to tweet your score?"))
+          window.location = "http://twitter.com/home?status=" + escape("I have collected " + player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html")
+        return
 
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
     $("#canvas").bind(("touchmove"), onTouchMove)
@@ -148,7 +165,7 @@ $ ->
   #}}}
 
   #{{{ - Game Variables
-  State = { _current: 0, INIT: 0, INTRO: 1, PLAYING: 2}
+  State = { _current: 0, INIT: 0, INTRO: 1, PLAYING: 2, SETTINGS: 3}
   canvas = document.getElementById('canvas')
   c = canvas.getContext('2d')
   canvas.width = document.body.clientWidth
@@ -163,11 +180,7 @@ $ ->
 
   # Counter
   counter = new Sprite 3, 3, "counter.png"
-  twitter = new Sprite canvas.width - 30, 3, "twitter.png"
-  twitter.setSize 30, 30
-
-  reset = new Sprite 75, 1, "reset.png"
-  reset.setSize 60, 18
+  info = new Sprite canvas.width - 23, 2, "info.png"
 
   # Player
   player = new Player
@@ -178,30 +191,28 @@ $ ->
   apple.setSize 30, 30
   apple.generate canvas
 
+  settings = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png"
+
   #}}}
 
   #{{{ - Draw
   draw = () ->
+    c.fillStyle = '#000000'
+    c.fillRect 0, 0, canvas.width, canvas.height
     if State._current == State.INTRO
-      c.fillStyle = '#000000'
-      c.fillRect 0, 0, canvas.width, canvas.height
       splash.draw c
       setTimeout () ->
         State._current = State.PLAYING
         draw()
       , 2000
     else if State._current == State.PLAYING
-      c.fillStyle = '#000000'
-      c.fillRect 0, 0, canvas.width, canvas.height
-
       # Add counter
       phrase = "X" + FormatNumberLength(player.score, 4)
       c.font = 'bold 16px Helvetica, sans-serif'
       c.fillStyle = '#FFFFFF'
       c.fillText phrase, 20, 16
       counter.draw c
-      reset.draw c
-      twitter.draw c
+      info.draw c
 
       apple.draw c
       player.draw c
@@ -216,6 +227,13 @@ $ ->
           showBonus = false
           draw
         , 500
+    else if State._current == State.SETTINGS
+      settings.draw c
+      phrase = player.score
+      c.font = 'bold 32px Helvetica, sans-serif'
+      c.fillStyle = '#FFFFFF'
+      mt = c.measureText(phrase)
+      c.fillText phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125
   #}}}
 
   $("#canvas").bind("touchstart", onTouchStart)
