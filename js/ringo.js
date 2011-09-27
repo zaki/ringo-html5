@@ -11,16 +11,14 @@
     var Apple, FormatNumberLength, Player, Sprite, State, apple, c, canvas, counter, draw, getCanvasLocalCoordinates, getTouchEvent, hitTest, info, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, player, settings, setupCanvasSize, showBonus, splash;
     window.top.scrollTo(0, 0);
     Sprite = (function() {
-      function Sprite(x, y, src) {
+      function Sprite(x, y, src, w, h) {
         this.x = x;
         this.y = y;
+        this.w = w;
+        this.h = h;
         this.image = new Image;
         this.image.src = "assets/images/" + src;
       }
-      Sprite.prototype.setSize = function(w, h) {
-        this.w = w;
-        this.h = h;
-      };
       Sprite.prototype.draw = function(c) {
         if (this.w != null) {
           return c.drawImage(this.image, this.x, this.y, this.w, this.h);
@@ -34,7 +32,7 @@
       __extends(Player, Sprite);
       function Player() {
         var initScore;
-        Player.__super__.constructor.call(this, 50, 50, "player.png");
+        Player.__super__.constructor.call(this, 50, 50, "player.png", 30, 30);
         initScore = parseInt(localStorage.getItem("ringo-score"));
         if (isNaN(initScore)) {
           initScore = 0;
@@ -64,7 +62,7 @@
       __extends(Apple, Sprite);
       function Apple() {
         var src;
-        Apple.__super__.constructor.call(this, 0, 0, "apple.png");
+        Apple.__super__.constructor.call(this, 0, 0, "apple.png", 30, 30);
         this.isBonus = false;
         this.audio = document.createElement('audio');
         src = document.createElement('source');
@@ -235,9 +233,7 @@
     counter = new Sprite(3, 3, "counter.png");
     info = new Sprite(canvas.width - 23, 2, "info.png");
     player = new Player;
-    player.setSize(30, 30);
     apple = new Apple;
-    apple.setSize(30, 30);
     apple.generate(canvas);
     settings = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png");
     draw = function() {

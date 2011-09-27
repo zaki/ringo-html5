@@ -3,11 +3,9 @@ $ ->
 
   #{{{ - Classes
   class Sprite
-    constructor: (@x, @y, src) ->
+    constructor: (@x, @y, src, @w, @h) ->
       @image = new Image
       @image.src = "assets/images/" + src
-
-    setSize: (@w, @h) ->
 
     draw: (c) ->
       if @w?
@@ -17,7 +15,7 @@ $ ->
 
   class Player extends Sprite
     constructor: () ->
-      super 50, 50, "player.png"
+      super 50, 50, "player.png", 30, 30
       initScore = parseInt(localStorage.getItem("ringo-score"))
       if isNaN(initScore)
         initScore = 0
@@ -34,7 +32,7 @@ $ ->
 
   class Apple extends Sprite
     constructor: () ->
-      super 0, 0, "apple.png"
+      super 0, 0, "apple.png", 30, 30
       @isBonus = false
       @audio = document.createElement('audio')
       src = document.createElement('source')
@@ -184,11 +182,9 @@ $ ->
 
   # Player
   player = new Player
-  player.setSize 30, 30
 
   # Apple
   apple = new Apple
-  apple.setSize 30, 30
   apple.generate canvas
 
   settings = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png"
