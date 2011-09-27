@@ -8,8 +8,11 @@
     return child;
   }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var Apple, FormatNumberLength, Game, Player, Sprite, c, canvas, game, getCanvasLocalCoordinates, getTouchEvent, hitTest, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, setupCanvasSize;
+    var Apple, FormatNumberLength, Game, Player, Sprite, c, canvas, game, getCanvasLocalCoordinates, getTouchEvent, hitTest, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, requestAnimFrame, setupCanvasSize, sign;
     window.top.scrollTo(0, 0);
+    requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || (function(callback, element) {
+      return window.setTimeout(callback, 1000 / 60);
+    });
     Sprite = (function() {
       function Sprite(x, y, src, w, h) {
         this.x = x;
@@ -39,10 +42,26 @@
           localStorage.setItem("ringo-score", 0);
         }
         this.score = initScore;
+        this.dx = 0;
+        this.dy = 0;
+        this.speed = 10;
       }
       Player.prototype.moveDelta = function(dx, dy) {
-        this.x += dx;
-        this.y += dy;
+        this.dx += dx;
+        return this.dy += dy;
+      };
+      Player.prototype.draw = function(c) {
+        var mx, my;
+        if (this.dx !== 0) {
+          mx = this.speed <= Math.abs(this.dx) ? this.speed : Math.abs(this.dx);
+          this.x += mx * sign(this.dx);
+          this.dx -= mx * sign(this.dx);
+        }
+        if (this.dy !== 0) {
+          my = this.speed <= Math.abs(this.dy) ? this.speed : Math.abs(this.dy);
+          this.y += my * sign(this.dy);
+          this.dy -= my * sign(this.dy);
+        }
         if (this.x < 0) {
           this.x = 0;
         }
@@ -53,8 +72,9 @@
           this.x = canvas.width - 15;
         }
         if (this.y > canvas.height - 30) {
-          return this.y = canvas.height - 30;
+          this.y = canvas.height - 30;
         }
+        return Player.__super__.draw.call(this, c);
       };
       return Player;
     })();
@@ -124,6 +144,9 @@
         this.player = new Player;
         this.apple = new Apple;
         this.apple.generate(canvas);
+        this.touching = false;
+        this.touchx = 0;
+        this.touchy = 0;
       }
       Game.prototype.isInit = function() {
         return this.state === 0;
@@ -155,11 +178,18 @@
         c.fillRect(0, 0, canvas.width, canvas.height);
         if (this.isIntro()) {
           this.splash.draw(c);
-          return setTimeout(__bind(function() {
-            this.setPlaying();
-            return this.draw();
+          setTimeout(__bind(function() {
+            return this.setPlaying();
           }, this), 2000);
         } else if (this.isPlaying()) {
+          if (this.touching) {
+            c.strokeStyle = '#333333';
+            c.lineWidth = 1;
+            c.beginPath();
+            c.rect(this.touchx - 25, this.touchy - 25, 50, 50);
+            c.closePath();
+            c.stroke();
+          }
           phrase = "X" + FormatNumberLength(this.player.score, 4);
           c.font = 'bold 16px Helvetica, sans-serif';
           c.fillStyle = '#FFFFFF';
@@ -174,9 +204,8 @@
             mt = c.measureText(phrase);
             xcoord = (canvas.width / 2) - (mt.width / 2);
             c.fillText(phrase, xcoord, canvas.height / 2 - 16);
-            return setTimeout(__bind(function() {
-              this.showBonus = false;
-              return this.draw();
+            setTimeout(__bind(function() {
+              return this.showBonus = false;
             }, this), 500);
           }
         } else if (this.isSetting()) {
@@ -185,11 +214,19 @@
           c.font = 'bold 32px Helvetica, sans-serif';
           c.fillStyle = '#FFFFFF';
           mt = c.measureText(phrase);
-          return c.fillText(phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125);
+          c.fillText(phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125);
         }
+        return requestAnimFrame(game.draw);
       };
       return Game;
     })();
+    sign = function(num) {
+      if (num < 0) {
+        return -1;
+      } else {
+        return 1;
+      }
+    };
     FormatNumberLength = function(num, length) {
       var r;
       r = "" + num;
@@ -201,9 +238,6 @@
     setupCanvasSize = function() {
       canvas.width = document.body.clientWidth;
       canvas.height = document.body.clientHeight;
-      if (!game.isInit()) {
-        game.draw();
-      }
       return true;
     };
     isIPhone = (new RegExp("iPhone", "i")).test(navigator.userAgent);
@@ -237,22 +271,22 @@
       event.preventDefault();
       localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY);
       if (game.isPlaying()) {
+        game.touching = true;
+        game.touchx = localPosition.x;
+        game.touchy = localPosition.y;
         if (hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)) {
           game.setSetting();
-          game.draw();
           return;
         }
       } else {
         if (hitTest(localPosition, canvas.width / 2 + 120, canvas.width / 2 + 150, canvas.height / 2 - 240, canvas.height / 2 - 215)) {
           game.setPlaying();
-          game.draw();
           return;
         }
         if (hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 140, canvas.height / 2 + 130, canvas.height / 2 + 165)) {
           if (confirm("Would you like to reset your score?")) {
             game.player.score = 0;
             localStorage.setItem("ringo-score", 0);
-            game.draw();
           }
           return;
         }
@@ -264,7 +298,7 @@
         }
         if (hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)) {
           if (confirm("Would you like to tweet your score?")) {
-            window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html");
+            window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.github.com/ringo-html5 Get the iPhone App: http://t.co/9OK31BL #ringo_html");
           }
           return;
         }
@@ -280,6 +314,8 @@
       var dx, dy, localPosition, touch;
       touch = getTouchEvent(event);
       localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY);
+      game.touchx = localPosition.x;
+      game.touchy = localPosition.y;
       dx = localPosition.x - lastTouchPoint.x;
       dy = localPosition.y - lastTouchPoint.y;
       lastTouchPoint = {
@@ -287,10 +323,10 @@
         y: localPosition.y
       };
       game.player.moveDelta(dx / 1.2, dy / 1.2);
-      game.apple.hitTest(game.player);
-      return setTimeout(game.draw, 1);
+      return game.apple.hitTest(game.player);
     };
     onTouchEnd = function(event) {
+      game.touching = false;
       $("#canvas").unbind("touchmove", onTouchMove);
       return $("#canvas").unbind("mousemove", onTouchMove);
     };

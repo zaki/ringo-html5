@@ -1,6 +1,16 @@
 $ ->
   window.top.scrollTo 0, 0
 
+  requestAnimFrame =
+      window.requestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.mozRequestAnimationFrame ||
+      window.oRequestAnimationFrame ||
+      window.msRequestAnimationFrame ||
+      ((callback, element) ->
+        window.setTimeout(callback, 1000/60)
+      )
+
   #{{{ - Classes
   class Sprite
     constructor: (@x, @y, src, @w, @h) ->
@@ -21,14 +31,32 @@ $ ->
         initScore = 0
         localStorage.setItem "ringo-score", 0
       @score = initScore
+      @dx = 0
+      @dy = 0
+      @speed = 10
 
     moveDelta: (dx, dy) ->
-      @x += dx
-      @y += dy
+      @dx += dx
+      @dy += dy
+
+    draw: (c) ->
+      if @dx != 0
+        mx = if @speed <= Math.abs(@dx) then @speed else Math.abs(@dx)
+        @x += (mx * sign(@dx))
+        @dx -= (mx * sign(@dx))
+
+      if @dy != 0
+        my = if @speed <= Math.abs(@dy) then @speed else Math.abs(@dy)
+        @y += (my * sign(@dy))
+        @dy -= (my * sign(@dy))
+
+
       @x = 0 if (@x < 0)
       @y = 0 if (@y < 0)
       @x = canvas.width - 15 if (@x > canvas.width - 15)
       @y = canvas.height - 30 if (@y > canvas.height - 30)
+
+      super(c)
 
   class Apple extends Sprite
     constructor: () ->
@@ -85,6 +113,9 @@ $ ->
       @player = new Player
       @apple = new Apple
       @apple.generate canvas
+      @touching = false
+      @touchx = 0
+      @touchy = 0
 
     # state-handling
     isInit: ()    -> @state == 0
@@ -104,9 +135,16 @@ $ ->
         @splash.draw c
         setTimeout () =>
           this.setPlaying()
-          this.draw()
         , 2000
       else if this.isPlaying()
+        if @touching
+          c.strokeStyle = '#333333'
+          c.lineWidth = 1
+          c.beginPath()
+          c.rect(@touchx-25, @touchy-25, 50, 50)
+          c.closePath()
+          c.stroke()
+
         # Add counter
         phrase = "X" + FormatNumberLength(@player.score, 4)
         c.font = 'bold 16px Helvetica, sans-serif'
@@ -114,6 +152,7 @@ $ ->
         c.fillText phrase, 20, 16
         @counter.draw c
         @info.draw c
+
 
         @apple.draw c
         @player.draw c
@@ -126,7 +165,6 @@ $ ->
           c.fillText phrase, xcoord, canvas.height / 2 - 16
           setTimeout () =>
             @showBonus = false
-            this.draw()
           , 500
       else if this.isSetting()
         @settings.draw c
@@ -135,10 +173,14 @@ $ ->
         c.fillStyle = '#FFFFFF'
         mt = c.measureText(phrase)
         c.fillText phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125
+      requestAnimFrame(game.draw)
 
   #}}}
 
   #{{{ - Utility Functions
+  sign = (num) ->
+    if num < 0 then -1 else 1
+
   FormatNumberLength = (num, length) ->
     r = "" + num
     while r.length < length
@@ -148,7 +190,6 @@ $ ->
   setupCanvasSize = () ->
     canvas.width = document.body.clientWidth
     canvas.height = document.body.clientHeight
-    game.draw() unless game.isInit()
     true
 
   isIPhone = (new RegExp("iPhone", "i")).test navigator.userAgent
@@ -178,22 +219,22 @@ $ ->
     localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY)
 
     if game.isPlaying()
+      game.touching = true
+      game.touchx = localPosition.x
+      game.touchy = localPosition.y
       if hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)
         game.setSetting()
-        game.draw()
         return
 
     else
       if hitTest(localPosition, canvas.width / 2 + 120, canvas.width / 2 + 150, canvas.height / 2 - 240, canvas.height / 2 - 215)
         game.setPlaying()
-        game.draw()
         return
 
       if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 140, canvas.height / 2 + 130, canvas.height / 2 + 165)
         if (confirm("Would you like to reset your score?"))
          game.player.score = 0
          localStorage.setItem "ringo-score", 0
-         game.draw()
         return
 
       if hitTest(localPosition, canvas.width / 2 - 125, canvas.width / 2 + 125, canvas.height / 2 + 175, canvas.height / 2 + 225)
@@ -203,7 +244,7 @@ $ ->
 
       if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)
         if (confirm("Would you like to tweet your score?"))
-          window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html")
+          window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.github.com/ringo-html5 Get the iPhone App: http://t.co/9OK31BL #ringo_html")
         return
 
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
@@ -214,15 +255,18 @@ $ ->
     touch = getTouchEvent(event)
     localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY)
 
+    game.touchx = localPosition.x
+    game.touchy = localPosition.y
+
     dx = localPosition.x - lastTouchPoint.x
     dy = localPosition.y - lastTouchPoint.y
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
     game.player.moveDelta dx/1.2, dy/1.2
     game.apple.hitTest game.player
 
-    setTimeout(game.draw, 1)
 
   onTouchEnd = (event) ->
+    game.touching = false
     $("#canvas").unbind("touchmove", onTouchMove)
     $("#canvas").unbind("mousemove", onTouchMove)
   #}}}
@@ -249,4 +293,3 @@ $ ->
 
   game.setIntro()
   game.draw()
-
