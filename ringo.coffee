@@ -63,14 +63,79 @@ $ ->
       if (player.x > @x - dd && player.x < @x + dd && player.y > @y - dd && player.y < @y + dd)
         player.score += if @isBonus then 10 else 1
         if (player.score % 10 == 0)
-          showBonus = true
-          draw()
+          game.showBonus = true
+          game.draw()
         if @isBonus
           @bonus.play()
         else
           @audio.play()
         localStorage.setItem("ringo-score", player.score)
         this.generate canvas
+
+  class Game
+    constructor: () ->
+      @state = 0
+      @splash = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "splash.png"
+      @splash.image.onload = () =>
+        @splash.draw c
+      @showBonus = false
+      @settings = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png"
+      @counter = new Sprite 3, 3, "counter.png"
+      @info = new Sprite canvas.width - 23, 2, "info.png"
+      @player = new Player
+      @apple = new Apple
+      @apple.generate canvas
+
+    # state-handling
+    isInit: ()    -> @state == 0
+    isIntro: ()   -> @state == 1
+    isPlaying: () -> @state == 2
+    isSetting: () -> @state == 3
+
+    setInit: ()    -> @state = 0
+    setIntro: ()   -> @state = 1
+    setPlaying: () -> @state = 2
+    setSetting: () -> @state = 3
+
+    draw: () =>
+      c.fillStyle = '#000000'
+      c.fillRect 0, 0, canvas.width, canvas.height
+      if this.isIntro()
+        @splash.draw c
+        setTimeout () =>
+          this.setPlaying()
+          this.draw()
+        , 2000
+      else if this.isPlaying()
+        # Add counter
+        phrase = "X" + FormatNumberLength(@player.score, 4)
+        c.font = 'bold 16px Helvetica, sans-serif'
+        c.fillStyle = '#FFFFFF'
+        c.fillText phrase, 20, 16
+        @counter.draw c
+        @info.draw c
+
+        @apple.draw c
+        @player.draw c
+
+        if (@showBonus)
+          c.font = 'bold 32px Helvetica, sans-serif'
+          c.fillStyle = '#FFFFFF'
+          mt = c.measureText(phrase)
+          xcoord = (canvas.width / 2) - (mt.width / 2)
+          c.fillText phrase, xcoord, canvas.height / 2 - 16
+          setTimeout () =>
+            @showBonus = false
+            this.draw()
+          , 500
+      else if this.isSetting()
+        @settings.draw c
+        phrase = @player.score
+        c.font = 'bold 32px Helvetica, sans-serif'
+        c.fillStyle = '#FFFFFF'
+        mt = c.measureText(phrase)
+        c.fillText phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125
+
   #}}}
 
   #{{{ - Utility Functions
@@ -83,7 +148,7 @@ $ ->
   setupCanvasSize = () ->
     canvas.width = document.body.clientWidth
     canvas.height = document.body.clientHeight
-    draw() if State._current != State.INIT
+    game.draw() unless game.isInit()
     true
 
   isIPhone = (new RegExp("iPhone", "i")).test navigator.userAgent
@@ -112,23 +177,23 @@ $ ->
     event.preventDefault()
     localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY)
 
-    if State._current == State.PLAYING
+    if game.isPlaying()
       if hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)
-        State._current = State.SETTINGS
-        draw()
+        game.setSetting()
+        game.draw()
         return
 
     else
       if hitTest(localPosition, canvas.width / 2 + 120, canvas.width / 2 + 150, canvas.height / 2 - 240, canvas.height / 2 - 215)
-        State._current = State.PLAYING
-        draw()
+        game.setPlaying()
+        game.draw()
         return
 
       if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 140, canvas.height / 2 + 130, canvas.height / 2 + 165)
         if (confirm("Would you like to reset your score?"))
-         player.score = 0
+         game.player.score = 0
          localStorage.setItem "ringo-score", 0
-         draw()
+         game.draw()
         return
 
       if hitTest(localPosition, canvas.width / 2 - 125, canvas.width / 2 + 125, canvas.height / 2 + 175, canvas.height / 2 + 225)
@@ -138,7 +203,7 @@ $ ->
 
       if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)
         if (confirm("Would you like to tweet your score?"))
-          window.location = "http://twitter.com/home?status=" + escape("I have collected " + player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html")
+          window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html")
         return
 
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
@@ -152,10 +217,10 @@ $ ->
     dx = localPosition.x - lastTouchPoint.x
     dy = localPosition.y - lastTouchPoint.y
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
-    player.moveDelta dx/1.2, dy/1.2
-    apple.hitTest player
+    game.player.moveDelta dx/1.2, dy/1.2
+    game.apple.hitTest game.player
 
-    setTimeout(draw, 1)
+    setTimeout(game.draw, 1)
 
   onTouchEnd = (event) ->
     $("#canvas").unbind("touchmove", onTouchMove)
@@ -163,73 +228,12 @@ $ ->
   #}}}
 
   #{{{ - Game Variables
-  State = { _current: 0, INIT: 0, INTRO: 1, PLAYING: 2, SETTINGS: 3}
   canvas = document.getElementById('canvas')
   c = canvas.getContext('2d')
   canvas.width = document.body.clientWidth
   canvas.height = document.body.clientHeight
 
-  showBonus = false
-
-  # Splashscreen
-  splash = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "splash.png"
-  splash.image.onload = () ->
-    splash.draw c
-
-  # Counter
-  counter = new Sprite 3, 3, "counter.png"
-  info = new Sprite canvas.width - 23, 2, "info.png"
-
-  # Player
-  player = new Player
-
-  # Apple
-  apple = new Apple
-  apple.generate canvas
-
-  settings = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png"
-
-  #}}}
-
-  #{{{ - Draw
-  draw = () ->
-    c.fillStyle = '#000000'
-    c.fillRect 0, 0, canvas.width, canvas.height
-    if State._current == State.INTRO
-      splash.draw c
-      setTimeout () ->
-        State._current = State.PLAYING
-        draw()
-      , 2000
-    else if State._current == State.PLAYING
-      # Add counter
-      phrase = "X" + FormatNumberLength(player.score, 4)
-      c.font = 'bold 16px Helvetica, sans-serif'
-      c.fillStyle = '#FFFFFF'
-      c.fillText phrase, 20, 16
-      counter.draw c
-      info.draw c
-
-      apple.draw c
-      player.draw c
-
-      if (showBonus)
-        c.font = 'bold 32px Helvetica, sans-serif'
-        c.fillStyle = '#FFFFFF'
-        mt = c.measureText(phrase)
-        xcoord = (canvas.width / 2) - (mt.width / 2)
-        c.fillText phrase, xcoord, canvas.height / 2 - 16
-        setTimeout () ->
-          showBonus = false
-          draw
-        , 500
-    else if State._current == State.SETTINGS
-      settings.draw c
-      phrase = player.score
-      c.font = 'bold 32px Helvetica, sans-serif'
-      c.fillStyle = '#FFFFFF'
-      mt = c.measureText(phrase)
-      c.fillText phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125
+  game = new Game
   #}}}
 
   $("#canvas").bind("touchstart", onTouchStart)
@@ -239,10 +243,10 @@ $ ->
 
   window.onorientationchange = () ->
     setupCanvasSize()
-    apple.generate canvas
+    game.apple.generate canvas
 
   setupCanvasSize()
 
-  State._current = State.INTRO
-  draw()
+  game.setIntro()
+  game.draw()
 

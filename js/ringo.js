@@ -6,9 +6,9 @@
     child.prototype = new ctor;
     child.__super__ = parent.prototype;
     return child;
-  };
+  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var Apple, FormatNumberLength, Player, Sprite, State, apple, c, canvas, counter, draw, getCanvasLocalCoordinates, getTouchEvent, hitTest, info, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, player, settings, setupCanvasSize, showBonus, splash;
+    var Apple, FormatNumberLength, Game, Player, Sprite, c, canvas, game, getCanvasLocalCoordinates, getTouchEvent, hitTest, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, setupCanvasSize;
     window.top.scrollTo(0, 0);
     Sprite = (function() {
       function Sprite(x, y, src, w, h) {
@@ -91,13 +91,13 @@
         return this.y = Math.floor(Math.random() * (canvas.height - 30));
       };
       Apple.prototype.hitTest = function(player) {
-        var dd, showBonus;
+        var dd;
         dd = this.isBonus ? 25 : 15;
         if (player.x > this.x - dd && player.x < this.x + dd && player.y > this.y - dd && player.y < this.y + dd) {
           player.score += this.isBonus ? 10 : 1;
           if (player.score % 10 === 0) {
-            showBonus = true;
-            draw();
+            game.showBonus = true;
+            game.draw();
           }
           if (this.isBonus) {
             this.bonus.play();
@@ -110,6 +110,86 @@
       };
       return Apple;
     })();
+    Game = (function() {
+      function Game() {
+        this.draw = __bind(this.draw, this);        this.state = 0;
+        this.splash = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "splash.png");
+        this.splash.image.onload = __bind(function() {
+          return this.splash.draw(c);
+        }, this);
+        this.showBonus = false;
+        this.settings = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png");
+        this.counter = new Sprite(3, 3, "counter.png");
+        this.info = new Sprite(canvas.width - 23, 2, "info.png");
+        this.player = new Player;
+        this.apple = new Apple;
+        this.apple.generate(canvas);
+      }
+      Game.prototype.isInit = function() {
+        return this.state === 0;
+      };
+      Game.prototype.isIntro = function() {
+        return this.state === 1;
+      };
+      Game.prototype.isPlaying = function() {
+        return this.state === 2;
+      };
+      Game.prototype.isSetting = function() {
+        return this.state === 3;
+      };
+      Game.prototype.setInit = function() {
+        return this.state = 0;
+      };
+      Game.prototype.setIntro = function() {
+        return this.state = 1;
+      };
+      Game.prototype.setPlaying = function() {
+        return this.state = 2;
+      };
+      Game.prototype.setSetting = function() {
+        return this.state = 3;
+      };
+      Game.prototype.draw = function() {
+        var mt, phrase, xcoord;
+        c.fillStyle = '#000000';
+        c.fillRect(0, 0, canvas.width, canvas.height);
+        if (this.isIntro()) {
+          this.splash.draw(c);
+          return setTimeout(__bind(function() {
+            this.setPlaying();
+            return this.draw();
+          }, this), 2000);
+        } else if (this.isPlaying()) {
+          phrase = "X" + FormatNumberLength(this.player.score, 4);
+          c.font = 'bold 16px Helvetica, sans-serif';
+          c.fillStyle = '#FFFFFF';
+          c.fillText(phrase, 20, 16);
+          this.counter.draw(c);
+          this.info.draw(c);
+          this.apple.draw(c);
+          this.player.draw(c);
+          if (this.showBonus) {
+            c.font = 'bold 32px Helvetica, sans-serif';
+            c.fillStyle = '#FFFFFF';
+            mt = c.measureText(phrase);
+            xcoord = (canvas.width / 2) - (mt.width / 2);
+            c.fillText(phrase, xcoord, canvas.height / 2 - 16);
+            return setTimeout(__bind(function() {
+              this.showBonus = false;
+              return this.draw();
+            }, this), 500);
+          }
+        } else if (this.isSetting()) {
+          this.settings.draw(c);
+          phrase = this.player.score;
+          c.font = 'bold 32px Helvetica, sans-serif';
+          c.fillStyle = '#FFFFFF';
+          mt = c.measureText(phrase);
+          return c.fillText(phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125);
+        }
+      };
+      return Game;
+    })();
     FormatNumberLength = function(num, length) {
       var r;
       r = "" + num;
@@ -121,8 +201,8 @@
     setupCanvasSize = function() {
       canvas.width = document.body.clientWidth;
       canvas.height = document.body.clientHeight;
-      if (State._current !== State.INIT) {
-        draw();
+      if (!game.isInit()) {
+        game.draw();
       }
       return true;
     };
@@ -156,23 +236,23 @@
       touch = getTouchEvent(event);
       event.preventDefault();
       localPosition = getCanvasLocalCoordinates(touch.pageX, touch.pageY);
-      if (State._current === State.PLAYING) {
+      if (game.isPlaying()) {
         if (hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)) {
-          State._current = State.SETTINGS;
-          draw();
+          game.setSetting();
+          game.draw();
           return;
         }
       } else {
         if (hitTest(localPosition, canvas.width / 2 + 120, canvas.width / 2 + 150, canvas.height / 2 - 240, canvas.height / 2 - 215)) {
-          State._current = State.PLAYING;
-          draw();
+          game.setPlaying();
+          game.draw();
           return;
         }
         if (hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 140, canvas.height / 2 + 130, canvas.height / 2 + 165)) {
           if (confirm("Would you like to reset your score?")) {
-            player.score = 0;
+            game.player.score = 0;
             localStorage.setItem("ringo-score", 0);
-            draw();
+            game.draw();
           }
           return;
         }
@@ -184,7 +264,7 @@
         }
         if (hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)) {
           if (confirm("Would you like to tweet your score?")) {
-            window.location = "http://twitter.com/home?status=" + escape("I have collected " + player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html");
+            window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.asia/ringo Get the iPhone App: http://t.co/9OK31BL #ringo_html");
           }
           return;
         }
@@ -206,85 +286,29 @@
         x: localPosition.x,
         y: localPosition.y
       };
-      player.moveDelta(dx / 1.2, dy / 1.2);
-      apple.hitTest(player);
-      return setTimeout(draw, 1);
+      game.player.moveDelta(dx / 1.2, dy / 1.2);
+      game.apple.hitTest(game.player);
+      return setTimeout(game.draw, 1);
     };
     onTouchEnd = function(event) {
       $("#canvas").unbind("touchmove", onTouchMove);
       return $("#canvas").unbind("mousemove", onTouchMove);
     };
-    State = {
-      _current: 0,
-      INIT: 0,
-      INTRO: 1,
-      PLAYING: 2,
-      SETTINGS: 3
-    };
     canvas = document.getElementById('canvas');
     c = canvas.getContext('2d');
     canvas.width = document.body.clientWidth;
     canvas.height = document.body.clientHeight;
-    showBonus = false;
-    splash = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "splash.png");
-    splash.image.onload = function() {
-      return splash.draw(c);
-    };
-    counter = new Sprite(3, 3, "counter.png");
-    info = new Sprite(canvas.width - 23, 2, "info.png");
-    player = new Player;
-    apple = new Apple;
-    apple.generate(canvas);
-    settings = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png");
-    draw = function() {
-      var mt, phrase, xcoord;
-      c.fillStyle = '#000000';
-      c.fillRect(0, 0, canvas.width, canvas.height);
-      if (State._current === State.INTRO) {
-        splash.draw(c);
-        return setTimeout(function() {
-          State._current = State.PLAYING;
-          return draw();
-        }, 2000);
-      } else if (State._current === State.PLAYING) {
-        phrase = "X" + FormatNumberLength(player.score, 4);
-        c.font = 'bold 16px Helvetica, sans-serif';
-        c.fillStyle = '#FFFFFF';
-        c.fillText(phrase, 20, 16);
-        counter.draw(c);
-        info.draw(c);
-        apple.draw(c);
-        player.draw(c);
-        if (showBonus) {
-          c.font = 'bold 32px Helvetica, sans-serif';
-          c.fillStyle = '#FFFFFF';
-          mt = c.measureText(phrase);
-          xcoord = (canvas.width / 2) - (mt.width / 2);
-          c.fillText(phrase, xcoord, canvas.height / 2 - 16);
-          return setTimeout(function() {
-            showBonus = false;
-            return draw;
-          }, 500);
-        }
-      } else if (State._current === State.SETTINGS) {
-        settings.draw(c);
-        phrase = player.score;
-        c.font = 'bold 32px Helvetica, sans-serif';
-        c.fillStyle = '#FFFFFF';
-        mt = c.measureText(phrase);
-        return c.fillText(phrase, canvas.width / 2 - mt.width / 2, canvas.height / 2 + 125);
-      }
-    };
+    game = new Game;
     $("#canvas").bind("touchstart", onTouchStart);
     $("#canvas").bind("mousedown", onTouchStart);
     $("#canvas").bind("touchend", onTouchEnd);
     $("#canvas").bind("mouseup", onTouchEnd);
     window.onorientationchange = function() {
       setupCanvasSize();
-      return apple.generate(canvas);
+      return game.apple.generate(canvas);
     };
     setupCanvasSize();
-    State._current = State.INTRO;
-    return draw();
+    game.setIntro();
+    return game.draw();
   });
 }).call(this);
