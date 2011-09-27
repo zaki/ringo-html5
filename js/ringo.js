@@ -43,17 +43,17 @@
       Player.prototype.moveDelta = function(dx, dy) {
         this.x += dx;
         this.y += dy;
-        if (player.x < 0) {
-          player.x = 0;
+        if (this.x < 0) {
+          this.x = 0;
         }
-        if (player.y < 0) {
-          player.y = 0;
+        if (this.y < 0) {
+          this.y = 0;
         }
-        if (player.x > canvas.width - 15) {
-          player.x = canvas.width - 15;
+        if (this.x > canvas.width - 15) {
+          this.x = canvas.width - 15;
         }
-        if (player.y > canvas.height - 30) {
-          return player.y = canvas.height - 30;
+        if (this.y > canvas.height - 30) {
+          return this.y = canvas.height - 30;
         }
       };
       return Player;

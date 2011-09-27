@@ -25,10 +25,10 @@ $ ->
     moveDelta: (dx, dy) ->
       @x += dx
       @y += dy
-      player.x = 0 if (player.x < 0)
-      player.y = 0 if (player.y < 0)
-      player.x = canvas.width - 15 if (player.x > canvas.width - 15)
-      player.y = canvas.height - 30 if (player.y > canvas.height - 30)
+      @x = 0 if (@x < 0)
+      @y = 0 if (@y < 0)
+      @x = canvas.width - 15 if (@x > canvas.width - 15)
+      @y = canvas.height - 30 if (@y > canvas.height - 30)
 
   class Apple extends Sprite
     constructor: () ->
