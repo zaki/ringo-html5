@@ -35,7 +35,7 @@
       __extends(Player, Sprite);
       function Player() {
         var initScore;
-        Player.__super__.constructor.call(this, 50, 50, "player.png", 30, 30);
+        Player.__super__.constructor.call(this, 50, 50, "boy.png", 30, 30);
         initScore = parseInt(localStorage.getItem("ringo-score"));
         if (isNaN(initScore)) {
           initScore = 0;
@@ -45,6 +45,8 @@
         this.dx = 0;
         this.dy = 0;
         this.speed = 10;
+        this.facing = 0;
+        this.frame = 0;
       }
       Player.prototype.moveDelta = function(dx, dy) {
         this.dx += dx;
@@ -52,6 +54,21 @@
       };
       Player.prototype.draw = function(c) {
         var mx, my;
+        if (this.dx > 0 || this.dy > 0) {
+          if (Math.abs(this.dx) < 5 && Math.abs(this.dy) > 5) {
+            if (this.dy < 0) {
+              this.facing = 3;
+            } else {
+              this.facing = 2;
+            }
+          } else {
+            if (this.dx < 0) {
+              this.facing = 1;
+            } else {
+              this.facing = 0;
+            }
+          }
+        }
         if (this.dx !== 0) {
           mx = this.speed <= Math.abs(this.dx) ? this.speed : Math.abs(this.dx);
           this.x += mx * sign(this.dx);
@@ -61,6 +78,13 @@
           my = this.speed <= Math.abs(this.dy) ? this.speed : Math.abs(this.dy);
           this.y += my * sign(this.dy);
           this.dy -= my * sign(this.dy);
+        }
+        this.frame += 1;
+        if (this.frame === 12) {
+          this.frame = 0;
+        }
+        if (this.dx === 0 && this.dy === 0) {
+          this.frame = 0;
         }
         if (this.x < 0) {
           this.x = 0;
@@ -74,7 +98,7 @@
         if (this.y > canvas.height - 30) {
           this.y = canvas.height - 30;
         }
-        return Player.__super__.draw.call(this, c);
+        return c.drawImage(this.image, parseInt(this.frame / 4) * 32, this.facing * 32, 32, 32, this.x, this.y, this.w, this.h);
       };
       return Player;
     })();

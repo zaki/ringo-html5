@@ -25,7 +25,7 @@ $ ->
 
   class Player extends Sprite
     constructor: () ->
-      super 50, 50, "player.png", 30, 30
+      super 50, 50, "boy.png", 30, 30
       initScore = parseInt(localStorage.getItem("ringo-score"))
       if isNaN(initScore)
         initScore = 0
@@ -34,12 +34,27 @@ $ ->
       @dx = 0
       @dy = 0
       @speed = 10
+      @facing = 0
+      @frame = 0
 
     moveDelta: (dx, dy) ->
       @dx += dx
       @dy += dy
 
     draw: (c) ->
+      if @dx > 0 or @dy > 0
+        if Math.abs(@dx) < 5 and Math.abs(@dy) > 5
+          if @dy < 0
+            @facing = 3
+          else
+            @facing = 2
+        else
+          if @dx < 0
+            @facing = 1
+          else
+            @facing = 0
+
+
       if @dx != 0
         mx = if @speed <= Math.abs(@dx) then @speed else Math.abs(@dx)
         @x += (mx * sign(@dx))
@@ -50,13 +65,17 @@ $ ->
         @y += (my * sign(@dy))
         @dy -= (my * sign(@dy))
 
+      @frame += 1
+      @frame = 0 if @frame == 12
+
+      @frame = 0 if @dx == 0 and @dy == 0
 
       @x = 0 if (@x < 0)
       @y = 0 if (@y < 0)
       @x = canvas.width - 15 if (@x > canvas.width - 15)
       @y = canvas.height - 30 if (@y > canvas.height - 30)
 
-      super(c)
+      c.drawImage(@image, parseInt(@frame / 4) * 32, @facing * 32, 32, 32, @x, @y, @w, @h)
 
   class Apple extends Sprite
     constructor: () ->
