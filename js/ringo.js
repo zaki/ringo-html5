@@ -163,8 +163,8 @@
         }, this);
         this.showBonus = false;
         this.settings = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png");
-        this.counter = new Sprite(3, 3, "counter.png");
-        this.info = new Sprite(canvas.width - 23, 2, "info.png");
+        this.counter = new Sprite(3, 12, "counter.png");
+        this.info = new Sprite(canvas.width - 23, 25, "info.png");
         this.player = new Player;
         this.apple = new Apple;
         this.apple.generate(canvas);
@@ -217,7 +217,7 @@
           phrase = "X" + FormatNumberLength(this.player.score, 4);
           c.font = 'bold 16px Helvetica, sans-serif';
           c.fillStyle = '#FFFFFF';
-          c.fillText(phrase, 20, 16);
+          c.fillText(phrase, 20, 25);
           this.counter.draw(c);
           this.info.draw(c);
           this.apple.draw(c);
@@ -298,7 +298,7 @@
         game.touching = true;
         game.touchx = localPosition.x;
         game.touchy = localPosition.y;
-        if (hitTest(localPosition, canvas.width - 30, canvas.width, 0, 30)) {
+        if (hitTest(localPosition, canvas.width - 30, canvas.width, 25, 55)) {
           game.setSetting();
           return;
         }
