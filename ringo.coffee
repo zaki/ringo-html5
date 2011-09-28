@@ -76,7 +76,6 @@ $ ->
           else
             @facing = 0
 
-
       if @dx != 0
         mx = if @speed <= Math.abs(@dx) then @speed else Math.abs(@dx)
         @x += (mx * sign(@dx))
@@ -158,6 +157,7 @@ $ ->
       @touching = false
       @touchx = 0
       @touchy = 0
+      @rotation = 0
 
       @blobs = [new Blob, new Blob, new Blob, new Blob,
                 new Blob, new Blob, new Blob, new Blob]
@@ -193,12 +193,23 @@ $ ->
             blob.draw c
 
         if @touching
+
+          if @player.dx != 0 or @player.dy != 0
+            @rotation += 5
+            @rotation = 0 if @rotation > 360
+
+          c.save()
+          c.translate @touchx, @touchy
+          c.rotate @rotation*Math.PI / 180
+
           c.strokeStyle = '#999'
           c.lineWidth = 1
           c.beginPath()
-          c.rect(@touchx-25, @touchy-25, 50, 50)
+          c.rect(-25, -25, 50, 50)
           c.closePath()
           c.stroke()
+
+          c.restore()
 
         # Add counter
         phrase = "X" + FormatNumberLength(@player.score, 4)

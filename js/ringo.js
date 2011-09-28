@@ -196,6 +196,7 @@
         this.touching = false;
         this.touchx = 0;
         this.touchy = 0;
+        this.rotation = 0;
         this.blobs = [new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob];
         this.generateBlobs();
       }
@@ -254,12 +255,22 @@
             _fn(blob);
           }
           if (this.touching) {
+            if (this.player.dx !== 0 || this.player.dy !== 0) {
+              this.rotation += 5;
+              if (this.rotation > 360) {
+                this.rotation = 0;
+              }
+            }
+            c.save();
+            c.translate(this.touchx, this.touchy);
+            c.rotate(this.rotation * Math.PI / 180);
             c.strokeStyle = '#999';
             c.lineWidth = 1;
             c.beginPath();
-            c.rect(this.touchx - 25, this.touchy - 25, 50, 50);
+            c.rect(-25, -25, 50, 50);
             c.closePath();
             c.stroke();
+            c.restore();
           }
           phrase = "X" + FormatNumberLength(this.player.score, 4);
           c.font = 'bold 16px Helvetica, sans-serif';
