@@ -79,8 +79,8 @@
       };
       Player.prototype.draw = function(c) {
         var mx, my;
-        if (this.dx > 0 || this.dy > 0) {
-          if (Math.abs(this.dx) < 5 && Math.abs(this.dy) > 5) {
+        if (Math.abs(this.dx) > 0 || Math.abs(this.dy) > 0) {
+          if (Math.abs(this.dx) < 2 && Math.abs(this.dy) > 2) {
             if (this.dy < 0) {
               this.facing = 3;
             } else {

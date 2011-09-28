@@ -64,8 +64,8 @@ $ ->
       @dy += dy
 
     draw: (c) ->
-      if @dx > 0 or @dy > 0
-        if Math.abs(@dx) < 5 and Math.abs(@dy) > 5
+      if Math.abs(@dx) > 0 or Math.abs(@dy) > 0
+        if Math.abs(@dx) < 2 and Math.abs(@dy) > 2
           if @dy < 0
             @facing = 3
           else
