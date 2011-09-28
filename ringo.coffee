@@ -12,6 +12,28 @@ $ ->
       )
 
   #{{{ - Classes
+  class Blob
+    constructor: () ->
+      @colors = ['#999', '#f99', '#99f', '#f9f', '#990', '#909', '#099']
+
+    generate: () ->
+      @x = Math.floor(Math.random()*(canvas.width - 15))
+      @y = Math.floor(Math.random()*(canvas.height- 30))
+      @color = Math.floor(Math.random()*@colors.length)
+      @size = 50 + Math.random() * 10
+      @grow = Math.random()*-6 + 3
+
+    draw: (c) ->
+      @size += @grow
+      @grow = -@grow if @size < 30 or @size > 80
+
+      c.strokeStyle = @colors[@color]
+      c.lineWidth = 1
+      c.beginPath()
+      c.rect(@x-@size/2, @y-@size/2, @size, @size)
+      c.closePath()
+      c.stroke()
+
   class Sprite
     constructor: (@x, @y, src, @w, @h) ->
       @image = new Image
@@ -109,9 +131,10 @@ $ ->
       dd = if @isBonus then 25 else 15
       if (player.x > @x - dd && player.x < @x + dd && player.y > @y - dd && player.y < @y + dd)
         player.score += if @isBonus then 10 else 1
+        game.generateBlobs()
+
         if (player.score % 10 == 0)
           game.showBonus = true
-          game.draw()
         if @isBonus
           @bonus.play()
         else
@@ -127,7 +150,7 @@ $ ->
         @splash.draw c
       @showBonus = false
       @settings = new Sprite canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png"
-      @counter = new Sprite 3, 12, "counter.png"
+      @counter = new Sprite 3, 28, "counter.png"
       @info = new Sprite canvas.width - 23, 25, "info.png"
       @player = new Player
       @apple = new Apple
@@ -135,6 +158,15 @@ $ ->
       @touching = false
       @touchx = 0
       @touchy = 0
+
+      @blobs = [new Blob, new Blob, new Blob, new Blob,
+                new Blob, new Blob, new Blob, new Blob]
+      this.generateBlobs()
+
+    generateBlobs: () ->
+      for blob in @blobs
+        do (blob) ->
+          blob.generate()
 
     # state-handling
     isInit: ()    -> @state == 0
@@ -156,8 +188,12 @@ $ ->
           this.setPlaying()
         , 2000
       else if this.isPlaying()
+        for blob in @blobs
+          do (blob) ->
+            blob.draw c
+
         if @touching
-          c.strokeStyle = '#333333'
+          c.strokeStyle = '#999'
           c.lineWidth = 1
           c.beginPath()
           c.rect(@touchx-25, @touchy-25, 50, 50)
@@ -168,7 +204,7 @@ $ ->
         phrase = "X" + FormatNumberLength(@player.score, 4)
         c.font = 'bold 16px Helvetica, sans-serif'
         c.fillStyle = '#FFFFFF'
-        c.fillText phrase, 20, 25
+        c.fillText phrase, 20, 41
         @counter.draw c
         @info.draw c
 

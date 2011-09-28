@@ -8,11 +8,36 @@
     return child;
   }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $(function() {
-    var Apple, FormatNumberLength, Game, Player, Sprite, c, canvas, game, getCanvasLocalCoordinates, getTouchEvent, hitTest, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, requestAnimFrame, setupCanvasSize, sign;
+    var Apple, Blob, FormatNumberLength, Game, Player, Sprite, c, canvas, game, getCanvasLocalCoordinates, getTouchEvent, hitTest, isAndroid, isIPhone, isSmartPhone, lastTouchPoint, onTouchEnd, onTouchMove, onTouchStart, requestAnimFrame, setupCanvasSize, sign;
     window.top.scrollTo(0, 0);
     requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || (function(callback, element) {
       return window.setTimeout(callback, 1000 / 60);
     });
+    Blob = (function() {
+      function Blob() {
+        this.colors = ['#999', '#f99', '#99f', '#f9f', '#990', '#909', '#099'];
+      }
+      Blob.prototype.generate = function() {
+        this.x = Math.floor(Math.random() * (canvas.width - 15));
+        this.y = Math.floor(Math.random() * (canvas.height - 30));
+        this.color = Math.floor(Math.random() * this.colors.length);
+        this.size = 50 + Math.random() * 10;
+        return this.grow = Math.random() * -6 + 3;
+      };
+      Blob.prototype.draw = function(c) {
+        this.size += this.grow;
+        if (this.size < 30 || this.size > 80) {
+          this.grow = -this.grow;
+        }
+        c.strokeStyle = this.colors[this.color];
+        c.lineWidth = 1;
+        c.beginPath();
+        c.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+        c.closePath();
+        return c.stroke();
+      };
+      return Blob;
+    })();
     Sprite = (function() {
       function Sprite(x, y, src, w, h) {
         this.x = x;
@@ -139,9 +164,9 @@
         dd = this.isBonus ? 25 : 15;
         if (player.x > this.x - dd && player.x < this.x + dd && player.y > this.y - dd && player.y < this.y + dd) {
           player.score += this.isBonus ? 10 : 1;
+          game.generateBlobs();
           if (player.score % 10 === 0) {
             game.showBonus = true;
-            game.draw();
           }
           if (this.isBonus) {
             this.bonus.play();
@@ -163,7 +188,7 @@
         }, this);
         this.showBonus = false;
         this.settings = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "settings.png");
-        this.counter = new Sprite(3, 12, "counter.png");
+        this.counter = new Sprite(3, 28, "counter.png");
         this.info = new Sprite(canvas.width - 23, 25, "info.png");
         this.player = new Player;
         this.apple = new Apple;
@@ -171,7 +196,21 @@
         this.touching = false;
         this.touchx = 0;
         this.touchy = 0;
+        this.blobs = [new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob];
+        this.generateBlobs();
       }
+      Game.prototype.generateBlobs = function() {
+        var blob, _i, _len, _ref, _results;
+        _ref = this.blobs;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          blob = _ref[_i];
+          _results.push((function(blob) {
+            return blob.generate();
+          })(blob));
+        }
+        return _results;
+      };
       Game.prototype.isInit = function() {
         return this.state === 0;
       };
@@ -197,7 +236,7 @@
         return this.state = 3;
       };
       Game.prototype.draw = function() {
-        var mt, phrase, xcoord;
+        var blob, mt, phrase, xcoord, _fn, _i, _len, _ref;
         c.fillStyle = '#000000';
         c.fillRect(0, 0, canvas.width, canvas.height);
         if (this.isIntro()) {
@@ -206,8 +245,16 @@
             return this.setPlaying();
           }, this), 2000);
         } else if (this.isPlaying()) {
+          _ref = this.blobs;
+          _fn = function(blob) {
+            return blob.draw(c);
+          };
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            blob = _ref[_i];
+            _fn(blob);
+          }
           if (this.touching) {
-            c.strokeStyle = '#333333';
+            c.strokeStyle = '#999';
             c.lineWidth = 1;
             c.beginPath();
             c.rect(this.touchx - 25, this.touchy - 25, 50, 50);
@@ -217,7 +264,7 @@
           phrase = "X" + FormatNumberLength(this.player.score, 4);
           c.font = 'bold 16px Helvetica, sans-serif';
           c.fillStyle = '#FFFFFF';
-          c.fillText(phrase, 20, 25);
+          c.fillText(phrase, 20, 41);
           this.counter.draw(c);
           this.info.draw(c);
           this.apple.draw(c);
