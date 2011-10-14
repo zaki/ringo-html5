@@ -181,7 +181,8 @@
     })();
     Game = (function() {
       function Game() {
-        this.draw = __bind(this.draw, this);        this.state = 0;
+        this.draw = __bind(this.draw, this);
+        this.setOffset = __bind(this.setOffset, this);        this.state = 0;
         this.splash = new Sprite(canvas.width / 2 - 160, canvas.height / 2 - 240, "splash.png");
         this.splash.image.onload = __bind(function() {
           return this.splash.draw(c);
@@ -197,6 +198,11 @@
         this.touchx = 0;
         this.touchy = 0;
         this.rotation = 0;
+        this.dx = 0;
+        this.dy = 0;
+        this.speed = 1;
+        this.off_x = 0;
+        this.off_y = 0;
         this.blobs = [new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob, new Blob];
         this.generateBlobs();
       }
@@ -211,6 +217,10 @@
           })(blob));
         }
         return _results;
+      };
+      Game.prototype.setOffset = function(dx, dy) {
+        this.dx += dx;
+        return this.dy += dy;
       };
       Game.prototype.isInit = function() {
         return this.state === 0;
@@ -237,7 +247,7 @@
         return this.state = 3;
       };
       Game.prototype.draw = function() {
-        var blob, mt, phrase, xcoord, _fn, _i, _len, _ref;
+        var blob, mt, mx, my, phrase, xcoord, _fn, _i, _len, _ref;
         c.fillStyle = '#000000';
         c.fillRect(0, 0, canvas.width, canvas.height);
         if (this.isIntro()) {
@@ -246,6 +256,18 @@
             return this.setPlaying();
           }, this), 2000);
         } else if (this.isPlaying()) {
+          if (this.dx !== 0) {
+            mx = this.speed <= Math.abs(this.dx) ? this.speed : Math.abs(this.dx);
+            this.off_x += mx * sign(this.dx);
+            this.dx -= mx * sign(this.dx);
+          }
+          if (this.dy !== 0) {
+            my = this.speed <= Math.abs(this.dy) ? this.speed : Math.abs(this.dy);
+            this.off_y += my * sign(this.dy);
+            this.dy -= my * sign(this.dy);
+          }
+          c.save();
+          c.translate(-this.off_x, -this.off_y);
           _ref = this.blobs;
           _fn = function(blob) {
             return blob.draw(c);
@@ -254,6 +276,7 @@
             blob = _ref[_i];
             _fn(blob);
           }
+          c.restore();
           if (this.touching) {
             if (this.player.dx !== 0 || this.player.dy !== 0) {
               this.rotation += 5;
@@ -405,6 +428,7 @@
         y: localPosition.y
       };
       game.player.moveDelta(dx / 1.2, dy / 1.2);
+      game.setOffset(dx / 9.9, dy / 9.9);
       return game.apple.hitTest(game.player);
     };
     onTouchEnd = function(event) {

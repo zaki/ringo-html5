@@ -158,6 +158,11 @@ $ ->
       @touchx = 0
       @touchy = 0
       @rotation = 0
+      @dx = 0
+      @dy = 0
+      @speed = 1
+      @off_x = 0
+      @off_y = 0
 
       @blobs = [new Blob, new Blob, new Blob, new Blob,
                 new Blob, new Blob, new Blob, new Blob]
@@ -167,6 +172,10 @@ $ ->
       for blob in @blobs
         do (blob) ->
           blob.generate()
+
+    setOffset: (dx,dy) =>
+      @dx += dx
+      @dy += dy
 
     # state-handling
     isInit: ()    -> @state == 0
@@ -188,9 +197,25 @@ $ ->
           this.setPlaying()
         , 2000
       else if this.isPlaying()
+
+        if @dx != 0
+          mx = if @speed <= Math.abs(@dx) then @speed else Math.abs(@dx)
+          @off_x += (mx * sign(@dx))
+          @dx -= (mx * sign(@dx))
+
+        if @dy != 0
+          my = if @speed <= Math.abs(@dy) then @speed else Math.abs(@dy)
+          @off_y += (my * sign(@dy))
+          @dy -= (my * sign(@dy))
+
+        c.save()
+        c.translate -@off_x, -@off_y
+
         for blob in @blobs
           do (blob) ->
-            blob.draw c
+            blob.draw(c)
+
+        c.restore()
 
         if @touching
 
@@ -328,6 +353,7 @@ $ ->
     dy = localPosition.y - lastTouchPoint.y
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
     game.player.moveDelta dx/1.2, dy/1.2
+    game.setOffset(dx/9.9, dy/9.9)
     game.apple.hitTest game.player
 
 
