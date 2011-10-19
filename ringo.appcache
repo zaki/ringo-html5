@@ -1,16 +1,15 @@
 CACHE MANIFEST
-# 2011-10-19:v1.0.1.1
+# 2011-10-19:v1.0.1.2
 index.html
 js/ringo.js
 jquery.min.js
 assets/images/apple.png
-assets/images/counter.png
 assets/images/boy.png
-assets/images/reset.png
-assets/images/ringo.png
-assets/images/splash.png
-assets/images/twitter.png
-assets/images/settings.png
+assets/images/counter.png
 assets/images/info.png
+assets/images/player.png
+assets/images/ringo.png
+assets/images/settings.png
+assets/images/splash.png
 assets/sounds/se1.wav
 assets/sounds/se2.wav
