@@ -329,13 +329,13 @@ $ ->
         return
 
       if hitTest(localPosition, canvas.width / 2 - 125, canvas.width / 2 + 125, canvas.height / 2 + 175, canvas.height / 2 + 225)
-        if (confirm("Would you like to reset your visit m7kenji.com?"))
+        if (confirm("Would you like to visit m7kenji.com?"))
           window.location = "http://m7kenji.com"
         return
 
       if hitTest(localPosition, canvas.width / 2 + 70, canvas.width / 2 + 110, canvas.height / 2 + 50, canvas.height / 2 + 90)
         if (confirm("Would you like to tweet your score?"))
-          window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://zaki.github.com/ringo-html5 Get the iPhone App: http://t.co/9OK31BL #ringo_html")
+          window.location = "http://twitter.com/home?status=" + escape("I have collected " + game.player.score + " apples so far. http://ringo.zaki.asia/ Get the iPhone App: http://t.co/9OK31BL #ringo_html")
         return
 
     lastTouchPoint = { x: localPosition.x, y: localPosition.y }
